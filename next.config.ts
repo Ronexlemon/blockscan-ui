@@ -4,11 +4,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/(.*)", // apply to all routes
+        source: "/(.*)",
         headers: [
           {
             key: "Content-Security-Policy",
-            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline';",
+            value: "script-src 'self' 'unsafe-eval' 'unsafe-inline'; connect-src 'self' http://localhost:8080;",
           },
         ],
       },
