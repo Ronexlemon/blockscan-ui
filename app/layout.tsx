@@ -28,13 +28,13 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <meta
-          httpEquiv="Content-Security-Policy"
-          content="
-            script-src 'self' 'unsafe-eval' 'unsafe-inline';
-            connect-src 'self' http://localhost:8080;
-          "
-        />
+       <meta
+    httpEquiv="Content-Security-Policy"
+    content="
+      script-src 'self' 'unsafe-eval' 'unsafe-inline';
+      connect-src * 'self' http://localhost:8080 https: wss:;
+    "
+  />
       </head>
 
       <body className="min-h-full flex flex-col">{children}</body>
