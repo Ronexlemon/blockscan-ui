@@ -36,36 +36,57 @@ export default function Home() {
   const txRef     = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const es = new EventSource(SSE_URL);
+  const controller = new AbortController();
 
-    es.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
+  const connect = async () => {
+    try {
+      const response = await fetch("/api/sse", {  
+        signal: controller.signal,
+      });
 
-        if (msg.type === "connected") {
-          setConnected(true);
-          setStatus("Live");
-          return;
+      setConnected(true);
+      setStatus("Live");
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data:")) continue;
+          try {
+            const msg = JSON.parse(line.slice(5).trim());
+
+            if (msg.type === "connected") {
+              setConnected(true);
+              setStatus("Live");
+            } else if (msg.type === "block") {
+              setBlocks((prev) => [msg.data as BlockEvent, ...prev].slice(0, MAX_ITEMS));
+            } else if (msg.type === "transaction") {
+              setTransactions((prev) => [msg.data as TransactionEvent, ...prev].slice(0, MAX_ITEMS));
+            }
+          } catch {}
         }
-
-        if (msg.type === "block") {
-          setBlocks((prev) => [msg.data as BlockEvent, ...prev].slice(0, MAX_ITEMS));
-        }
-
-        if (msg.type === "transaction") {
-          setTransactions((prev) => [msg.data as TransactionEvent, ...prev].slice(0, MAX_ITEMS));
-        }
-      } catch {}
-    };
-
-    es.onerror = () => {
+      }
+    } catch (err: any) {
+      if (err.name === "AbortError") return;
       setConnected(false);
       setStatus("Reconnecting...");
-    };
+      setTimeout(connect, 3000);
+    }
+  };
 
-    return () => es.close();
-  }, []);
+  connect();
 
+  return () => controller.abort();
+}, []);
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 font-mono flex flex-col">
 
