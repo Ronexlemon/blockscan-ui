@@ -32,7 +32,7 @@ export default function RootLayout({
     httpEquiv="Content-Security-Policy"
     content="
       script-src 'self' 'unsafe-eval' 'unsafe-inline';
-      connect-src * 'self' http://localhost:8080 https: wss:;
+      connect-src * :;
     "
   />
       </head>
